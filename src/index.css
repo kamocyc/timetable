@@ -1,0 +1,10 @@
+.main-textarea {
+  width: 400px;
+  height: 800px;
+  display: block;
+  float: left;
+}
+
+.disp {
+  float: right;
+}
