@@ -24,11 +24,29 @@ function toTimeString(t: Date): string {
   return t.toLocaleTimeString('en-US', { hour12: false });
 }
 
+function min(a: number, b: number): number {
+  return a < b ? a : b;
+}
+
+function showNotification(title: string, message: string) {
+  if (Notification.permission !== 'granted')
+    Notification.requestPermission();
+  else {
+    var notification = new Notification(title, {
+      icon: 'http://cdn.sstatic.net/stackexchange/img/logos/so/so-icon.png',
+      body: message,
+    });
+    // notification
+  }
+}
+
 function ringAlarm(): void {
   const alarmUrl = './alarm.mp3'
   const audio = new Audio(alarmUrl);
   console.log("RING!!!");
   audio.play();
+  
+  showNotification("Timetable", "Time is up!!!!");
 };
 
 function newArray(length: number): any[] {
@@ -49,7 +67,7 @@ export const Runner = ( { timeQuotas }: { timeQuotas: Timetable[]}) => {
     if(timeQuotas.length === 0) return undefined;
     if(currentTime < timeQuotas[0].start) return undefined;
     
-    console.log({timeQuotas: timeQuotas});
+    // console.log({timeQuotas: timeQuotas});
     
     for(let i=0; i<timeQuotas.length; i++) {
       if(currentTime >= timeQuotas[i].start && currentTime <= timeQuotas[i].end) return i;
@@ -59,8 +77,6 @@ export const Runner = ( { timeQuotas }: { timeQuotas: Timetable[]}) => {
   };
   
   useEffect(() => {
-    console.log({"AAA": timeQuotas.length});
-    
     const rangs_ = rangs.length === 0 ? (newArray(timeQuotas.length)).map(() => false) : rangs;
     
     const interval = setInterval(() => {
@@ -70,9 +86,9 @@ export const Runner = ( { timeQuotas }: { timeQuotas: Timetable[]}) => {
       setCurrentText(currentTimeSpanIndex === undefined ? "" : timeQuotas[currentTimeSpanIndex].name);
       
       console.log("CHECK!!");
-      console.log({rangs: rangs_});
+      // console.log({rangs: rangs_});
       const getLastNotRangIndex = () => {
-        for(let i = rangs_.length - 1; i >= 0; i--) {
+        for(let i = min(rangs_.length, timeQuotas.length) - 1; i >= 0; i--) {
           if(!rangs_[i] && timeQuotas[i].end <= currentDate && timeQuotas[i].end >= addMinutes(currentDate, -1)) {
             return i;
           }
@@ -83,7 +99,7 @@ export const Runner = ( { timeQuotas }: { timeQuotas: Timetable[]}) => {
       
       const lastIndex = getLastNotRangIndex();
       
-      console.log({lastIndex: lastIndex});
+      // console.log({lastIndex: lastIndex});
       
       if(lastIndex === undefined || timeQuotas.length <= lastIndex) { 
         return;
@@ -124,6 +140,16 @@ export const Editor = () => {
     
     setTimetableText(raw);
     interpretTimetableSource(raw);
+    
+    if (!Notification) {
+      alert('Desktop notifications not available in your browser. Try Chromium.');
+      return;
+    }
+
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+    
   }, []);
   
   const recalculateTime = (startTime: Date, timeQuotas: {duration: number, name: string}[]) => {
